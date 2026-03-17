@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0c0c0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>WALLET</title>
+<link rel="manifest" href="manifest-wallet.json">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0c0c0f;--s1:#131318;--s2:#1a1a22;--s3:#22222c;--s4:#2a2a36;
+  --border:#2a2a36;--border2:#363645;
+  --accent:#7c6aff;--accent2:#5b4fd4;--accent-dim:rgba(124,106,255,.15);--accent-glow:rgba(124,106,255,.3);
+  --green:#3dd68c;--green-dim:rgba(61,214,140,.12);
+  --red:#ff5c5c;--red-dim:rgba(255,92,92,.12);
+  --orange:#ff9f43;--orange-dim:rgba(255,159,67,.12);
+  --yellow:#ffd93d;
+  --text:#eeeef5;--text2:#8888aa;--text3:#44445a;
+  --r:16px;--rs:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{font-size:16px;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+input,button,select{font-family:inherit;}
+input[type=number]{-moz-appearance:textfield;}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px;}
+
+/* ── NAV ── */
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(12,12,15,.97);backdrop-filter:blur(24px);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 8px 9px;cursor:pointer;border:none;background:transparent;color:var(--text3);transition:color .2s;}
+.nav-btn.active{color:var(--accent);}
+.nav-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.nav-btn span{font-size:9px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;font-family:'DM Mono',monospace;}
+
+/* ── VIEWS ── */
+.view{display:none;min-height:100vh;padding-bottom:90px;}
+.view.active{display:block;}
+
+/* ── HEADER ── */
+.hdr{padding:52px 20px 16px;}
+.hdr-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:3px;text-transform:uppercase;margin-bottom:5px;}
+.hdr-title{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;letter-spacing:-1px;line-height:1;}
+.hdr-sub{font-size:12px;color:var(--text2);margin-top:5px;}
+
+/* ── HERO CARD ── */
+.hero{margin:0 16px 16px;background:linear-gradient(135deg,var(--accent2) 0%,var(--accent) 60%,#9c8fff 100%);border-radius:20px;padding:24px;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.07);}
+.hero::after{content:'';position:absolute;bottom:-60px;left:-20px;width:200px;height:200px;border-radius:50%;background:rgba(0,0,0,.1);}
+.hero-label{font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,.6);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;position:relative;z-index:1;}
+.hero-amount{font-family:'Syne',sans-serif;font-size:42px;font-weight:800;color:#fff;line-height:1;position:relative;z-index:1;letter-spacing:-1px;}
+.hero-amount span{font-size:20px;font-weight:400;opacity:.7;margin-right:2px;}
+.hero-sub{font-size:12px;color:rgba(255,255,255,.6);margin-top:6px;position:relative;z-index:1;}
+.hero-row{display:flex;gap:16px;margin-top:20px;position:relative;z-index:1;}
+.hero-stat{flex:1;}
+.hero-stat-val{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:#fff;}
+.hero-stat-lbl{font-size:10px;color:rgba(255,255,255,.55);margin-top:1px;}
+
+/* ── BUDGET BAR ── */
+.budget-bar-wrap{margin:0 16px 16px;}
+.budget-bar-top{display:flex;justify-content:space-between;margin-bottom:8px;}
+.budget-bar-lbl{font-size:11px;color:var(--text2);}
+.budget-bar-pct{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);}
+.budget-bar-bg{background:var(--s3);border-radius:99px;height:8px;overflow:hidden;}
+.budget-bar-fill{height:100%;border-radius:99px;transition:width .5s ease,background .3s;}
+
+/* ── SECTION TITLE ── */
+.sec-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;padding:0 16px;margin-bottom:10px;}
+
+/* ── CAT GRID ── */
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 16px;}
+.cat-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:border-color .2s,transform .15s;active:transform:scale(.97);}
+.cat-card:active{transform:scale(.97);}
+.cat-card-icon{font-size:22px;margin-bottom:8px;}
+.cat-card-name{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px;}
+.cat-card-amount{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--text);}
+.cat-card-amount span{font-size:11px;font-weight:400;color:var(--text3);}
+.cat-card-bar{margin-top:8px;background:var(--s3);border-radius:99px;height:3px;overflow:hidden;}
+.cat-card-bar-fill{height:100%;border-radius:99px;background:var(--accent);}
+
+/* ── ADD EXPENSE ── */
+.add-btn-float{position:fixed;bottom:80px;right:16px;width:52px;height:52px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px var(--accent-glow);z-index:99;transition:transform .2s;}
+.add-btn-float:active{transform:scale(.92);}
+.add-btn-float svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:200;display:none;align-items:flex-end;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--s1);border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;border-top:1px solid var(--border2);animation:slideUp .25s ease;}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.modal-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:20px;}
+.modal-field{margin-bottom:16px;}
+.modal-label{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;}
+.modal-input{background:var(--s3);border:1px solid var(--border2);border-radius:var(--rs);padding:12px 14px;font-size:16px;font-weight:600;color:var(--text);width:100%;outline:none;transition:border-color .15s;}
+.modal-input:focus{border-color:var(--accent);}
+.modal-input-big{font-size:28px;font-family:'Syne',sans-serif;font-weight:800;padding:16px 14px;}
+.modal-select{background:var(--s3);border:1px solid var(--border2);border-radius:var(--rs);padding:12px 14px;font-size:14px;color:var(--text);width:100%;outline:none;}
+.modal-cats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px;}
+.modal-cat-btn{background:var(--s3);border:1.5px solid var(--border2);border-radius:var(--rs);padding:10px 6px;cursor:pointer;text-align:center;transition:all .2s;}
+.modal-cat-btn.selected{background:var(--accent-dim);border-color:var(--accent);}
+.modal-cat-icon{font-size:18px;margin-bottom:3px;}
+.modal-cat-name{font-size:10px;color:var(--text2);font-weight:500;}
+.modal-btn-row{display:flex;gap:10px;margin-top:20px;}
+.modal-cancel{flex:0 0 auto;padding:14px 20px;border-radius:var(--rs);border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:14px;font-weight:600;cursor:pointer;}
+.modal-confirm{flex:1;padding:14px;border-radius:var(--rs);border:none;background:var(--accent);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;}
+
+/* ── WEEKLY CARD ── */
+.week-setup{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);margin:0 16px 16px;padding:16px;}
+.week-setup-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:12px;}
+.week-setup-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.week-setup-row:last-child{border-bottom:none;}
+.week-setup-name{font-size:13px;font-weight:500;}
+.week-setup-sub{font-size:11px;color:var(--text2);margin-top:1px;font-family:'DM Mono',monospace;}
+.week-setup-right{display:flex;align-items:center;gap:10px;}
+.week-setup-amt{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--orange);}
+.toggle-btn{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.toggle-btn.on{background:var(--green);border-color:var(--green);}
+.toggle-btn svg{width:13px;height:13px;stroke:#000;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ── EXPENSES LIST ── */
+.exp-list{padding:0 16px;}
+.exp-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.exp-item:last-child{border-bottom:none;}
+.exp-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.exp-info{flex:1;min-width:0;}
+.exp-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.exp-date{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:1px;}
+.exp-amt{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--red);flex-shrink:0;}
+.exp-delete{width:28px;height:28px;border-radius:50%;border:none;background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.exp-delete:active{color:var(--red);}
+
+/* ── SAVINGS ── */
+.savings-hero{margin:0 16px 16px;background:linear-gradient(135deg,#1a3a2a 0%,#0f2a1a 100%);border:1px solid rgba(61,214,140,.2);border-radius:20px;padding:24px;position:relative;overflow:hidden;}
+.savings-hero::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(61,214,140,.06);}
+.savings-label{font-family:'DM Mono',monospace;font-size:9px;color:rgba(61,214,140,.6);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.savings-amount{font-family:'Syne',sans-serif;font-size:42px;font-weight:800;color:var(--green);line-height:1;letter-spacing:-1px;}
+.savings-amount span{font-size:20px;font-weight:400;opacity:.6;margin-right:2px;}
+.savings-sub{font-size:12px;color:rgba(61,214,140,.5);margin-top:6px;}
+.savings-history{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);margin:0 16px 16px;overflow:hidden;}
+.savings-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);}
+.savings-row:last-child{border-bottom:none;}
+.savings-row-week{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace;}
+.savings-row-amt{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--green);}
+.savings-add-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:calc(100%-32px);margin:0 16px 16px;padding:14px;background:var(--green-dim);border:1px solid rgba(61,214,140,.25);border-radius:var(--r);cursor:pointer;color:var(--green);font-size:14px;font-weight:600;transition:all .2s;}
+.savings-add-btn:active{background:rgba(61,214,140,.2);}
+
+/* ── FIXED MONTHLY ── */
+.fixed-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);margin:0 16px 10px;overflow:hidden;}
+.fixed-card-hdr{padding:14px 16px;display:flex;align-items:center;gap:12px;}
+.fixed-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.fixed-info{flex:1;}
+.fixed-name{font-size:13px;font-weight:600;}
+.fixed-detail{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;margin-top:2px;}
+.fixed-amounts{text-align:right;}
+.fixed-monthly{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--orange);}
+.fixed-weekly{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;}
+.fixed-prog{padding:0 16px 14px;}
+.fixed-prog-top{display:flex;justify-content:space-between;margin-bottom:5px;}
+.fixed-prog-lbl{font-size:10px;color:var(--text3);}
+.fixed-prog-val{font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;}
+.fixed-prog-bg{background:var(--s3);border-radius:99px;height:5px;overflow:hidden;}
+.fixed-prog-fill{height:100%;border-radius:99px;background:var(--orange);transition:width .4s ease;}
+
+/* ── PROGRESS VIEW ── */
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:0 16px 14px;}
+.stat-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;}
+.stat-val{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--accent);line-height:1;}
+.stat-lbl{font-size:9px;color:var(--text2);margin-top:3px;text-transform:uppercase;letter-spacing:.5px;font-family:'DM Mono',monospace;}
+.chart-box{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin:0 16px 12px;}
+.chart-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:2px;}
+.chart-sub{font-size:10px;color:var(--text3);margin-bottom:14px;}
+.range-tabs{display:flex;gap:6px;margin-bottom:12px;}
+.range-tab{flex:1;padding:6px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:10px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center;font-family:'DM Mono',monospace;}
+.range-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* ── HISTORY ── */
+.hist-week{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);margin:0 16px 10px;overflow:hidden;}
+.hist-week-hdr{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.hist-week-lbl{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
+.hist-week-date{font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;margin-top:2px;}
+.hist-week-total{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--red);}
+.hist-week-body{display:none;border-top:1px solid var(--border);}
+.hist-week.open .hist-week-body{display:block;}
+.hist-cat-row{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border);}
+.hist-cat-row:last-child{border-bottom:none;}
+.hist-cat-name{font-size:12px;color:var(--text2);}
+.hist-cat-amt{font-family:'DM Mono',monospace;font-size:12px;color:var(--text);}
+
+/* ── SETTINGS ── */
+.set-section{padding:0 16px 8px;}
+.set-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;font-family:'DM Mono',monospace;margin-bottom:8px;padding-left:2px;}
+.set-item{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.set-item-l{display:flex;flex-direction:column;gap:2px;}
+.set-item-title{font-size:14px;font-weight:500;}
+.set-item-sub{font-size:11px;color:var(--text2);}
+
+/* ── MISC ── */
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--s3);border:1px solid var(--border2);border-radius:99px;padding:9px 18px;font-size:12px;font-weight:500;opacity:0;transition:all .25s;pointer-events:none;z-index:300;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.empty{text-align:center;padding:40px 24px;}
+.empty-ico{font-size:40px;margin-bottom:10px;}
+.empty-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px;}
+.empty-sub{font-size:12px;color:var(--text2);line-height:1.6;}
+.divider{height:1px;background:var(--border);margin:0 16px 16px;}
+@media(min-width:480px){.stats-row{grid-template-columns:repeat(4,1fr);}}
+</style>
+</head>
+<body>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modal"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══ VIEW: HOME ══ -->
+<div class="view active" id="view-home">
+  <div class="hdr">
+    <div class="hdr-label">Semana actual</div>
+    <div class="hdr-title" id="homeTitle">WALLET</div>
+    <div class="hdr-sub" id="homeDate"></div>
+  </div>
+  <div id="heroWrap"></div>
+  <div id="budgetBarWrap"></div>
+  <div id="provisionsWrap"></div>
+  <div class="sec-title" id="expSecTitle" style="display:none;">Gastos de la semana</div>
+  <div id="expListWrap"></div>
+  <div style="height:16px;"></div>
+  <button class="add-btn-float" onclick="openAddExpense()">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+</div>
+
+<!-- ══ VIEW: SAVINGS ══ -->
+<div class="view" id="view-savings">
+  <div class="hdr">
+    <div class="hdr-label">Mi dinero guardado</div>
+    <div class="hdr-title">AHORRO</div>
+    <div class="hdr-sub" id="savingsSub"></div>
+  </div>
+  <div id="savingsHeroWrap"></div>
+  <button class="savings-add-btn" onclick="openAddSavings()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Registrar ahorro del domingo
+  </button>
+  <div class="sec-title">Historial de ahorro</div>
+  <div id="savingsHistWrap"></div>
+</div>
+
+<!-- ══ VIEW: FIXED ══ -->
+<div class="view" id="view-fixed">
+  <div class="hdr">
+    <div class="hdr-label">Gastos recurrentes</div>
+    <div class="hdr-title">FIJOS</div>
+    <div class="hdr-sub">Configura y provisiona tus gastos mensuales</div>
+  </div>
+  <div id="fixedListWrap"></div>
+  <div style="padding:0 16px 16px;">
+    <button class="savings-add-btn" style="margin:0;width:100%;color:var(--accent);background:var(--accent-dim);border-color:rgba(124,106,255,.25);" onclick="openAddFixed()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Agregar gasto fijo
+    </button>
+  </div>
+</div>
+
+<!-- ══ VIEW: HISTORY ══ -->
+<div class="view" id="view-history">
+  <div class="hdr">
+    <div class="hdr-label">Registros</div>
+    <div class="hdr-title">HISTORIAL</div>
+    <div class="hdr-sub">Comparativa de semanas y meses</div>
+  </div>
+  <div class="stats-row" id="histStats"></div>
+  <div class="chart-box">
+    <div class="chart-title">Gasto semanal</div>
+    <div class="chart-sub">Total gastado por semana</div>
+    <div class="range-tabs">
+      <button class="range-tab active" data-r="all" onclick="setHistRange(this)">Todo</button>
+      <button class="range-tab" data-r="3m" onclick="setHistRange(this)">3 meses</button>
+      <button class="range-tab" data-r="1m" onclick="setHistRange(this)">1 mes</button>
+    </div>
+    <div style="position:relative;height:180px;"><canvas id="weeklyChart"></canvas></div>
+  </div>
+  <div class="chart-box">
+    <div class="chart-title">Gasto mensual por categoría</div>
+    <div class="chart-sub">Distribución este mes</div>
+    <div style="position:relative;height:200px;"><canvas id="catChart"></canvas></div>
+  </div>
+  <div class="sec-title" style="margin-top:8px;">Semanas anteriores</div>
+  <div id="histWeeksList"></div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="switchView('home',this)">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Inicio</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('savings',this)">
+    <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 6v6l4 2"/></svg>
+    <span>Ahorro</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('fixed',this)">
+    <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+    <span>Fijos</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('history',this)">
+    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span>Historial</span>
+  </button>
+</nav>
+
+<script>
+// ══════════════════════════════════════════
+// CATEGORIES
+// ══════════════════════════════════════════
+const WEEKLY_CATS = [
+  {id:'transport', name:'Pasajes', icon:'🚌', color:'#4a9eff'},
+  {id:'food', name:'Alimentos', icon:'🍽️', color:'#ff9f43'},
+  {id:'basics', name:'Básicos', icon:'🛒', color:'#3dd68c'},
+  {id:'outings', name:'Salidas', icon:'🎉', color:'#ff6b9d'},
+  {id:'other', name:'Otros', icon:'📦', color:'#8888aa'},
+];
+const SPORADIC_CATS = [
+  {id:'clothing', name:'Ropa', icon:'👕', color:'#7c6aff'},
+  {id:'fragrance', name:'Perfumes', icon:'🌿', color:'#aa88ff'},
+  {id:'supplements', name:'Suplementos', icon:'💊', color:'#3dd68c'},
+  {id:'sporadic_other', name:'Otro', icon:'✨', color:'#ffd93d'},
+];
+const ALL_CATS = [...WEEKLY_CATS, ...SPORADIC_CATS];
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let data = JSON.parse(localStorage.getItem('wallet_data') || 'null') || {
+  weeks: {},       // {weekKey: {budget, provisions_confirmed, expenses:[]}}
+  savings: [],     // [{weekKey, amount, date, note}]
+  fixed: [         // user-defined fixed monthly expenses
+    {id:'gym', name:'Gym', icon:'🏋️', monthly:400, color:'#ff9f43'},
+    {id:'audio', name:'Streaming Audio', icon:'🎵', monthly:60, color:'#3dd68c'},
+    {id:'video', name:'Streaming Video', icon:'📺', monthly:150, color:'#7c6aff'},
+    {id:'haircut', name:'Corte de cabello', icon:'✂️', monthly:150, color:'#4a9eff'},
+  ]
+};
+let histRange = 'all';
+let weeklyChartInst = null;
+let catChartInst = null;
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+const toDay = () => new Date().toISOString().split('T')[0];
+function save(){ localStorage.setItem('wallet_data', JSON.stringify(data)); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+function fmt(n){ return '$'+Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+function fmtDate(d){ return new Date(d+'T12:00:00').toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'}); }
+
+function getWeekKey(offset=0){
+  const n=new Date(); const day=n.getDay()||7;
+  const mon=new Date(n); mon.setDate(n.getDate()-day+1+offset*7);
+  return mon.toISOString().split('T')[0];
+}
+function getWeekRange(key){
+  const mon=new Date(key+'T12:00:00');
+  const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+  return {
+    start:key,
+    end:sun.toISOString().split('T')[0],
+    label:`${mon.toLocaleDateString('es-MX',{day:'numeric',month:'short'})} — ${sun.toLocaleDateString('es-MX',{day:'numeric',month:'short'})}`
+  };
+}
+function currentWeekKey(){ return getWeekKey(0); }
+function ensureWeek(key){ if(!data.weeks[key]) data.weeks[key]={budget:0,provisions_confirmed:{},expenses:[]}; }
+
+function weeklyProvisionTotal(){
+  return data.fixed.reduce((sum,f)=>sum+(f.monthly/4.33),0);
+}
+function confirmedProvisions(key){
+  const w=data.weeks[key]||{}; const pc=w.provisions_confirmed||{};
+  return data.fixed.reduce((sum,f)=>sum+(pc[f.id]?f.monthly/4.33:0),0);
+}
+function weekTotal(key){
+  const w=data.weeks[key]; if(!w) return 0;
+  return (w.expenses||[]).reduce((s,e)=>s+e.amount,0)+confirmedProvisions(key);
+}
+function weekRemaining(key){
+  const w=data.weeks[key]; if(!w) return 0;
+  return w.budget - weekTotal(key);
+}
+function getCat(id){ return ALL_CATS.find(c=>c.id===id)||{name:id,icon:'📦',color:'#888'}; }
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function switchView(name, btn){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='savings') renderSavings();
+  if(name==='fixed') renderFixed();
+  if(name==='history') renderHistory();
+}
+
+// ══════════════════════════════════════════
+// HOME VIEW
+// ══════════════════════════════════════════
+function initHome(){
+  const key = currentWeekKey();
+  ensureWeek(key);
+  const {label} = getWeekRange(key);
+  document.getElementById('homeDate').textContent = label;
+  renderHero(key);
+  renderBudgetBar(key);
+  renderProvisions(key);
+  renderExpList(key);
+}
+
+function renderHero(key){
+  const w = data.weeks[key];
+  const remaining = weekRemaining(key);
+  const spent = weekTotal(key);
+  const budget = w.budget||0;
+  const hasBudget = budget > 0;
+
+  document.getElementById('heroWrap').innerHTML = `
+    <div class="hero" onclick="${hasBudget?'':'openSetBudget()'}">
+      <div class="hero-label">${hasBudget?'Disponible':'Toca para ingresar presupuesto'}</div>
+      <div class="hero-amount"><span>$</span>${hasBudget?Number(remaining).toLocaleString('es-MX',{minimumFractionDigits:0}):'—'}</div>
+      <div class="hero-sub">${hasBudget?`de ${fmt(budget)} esta semana`:'Sin presupuesto registrado'}</div>
+      ${hasBudget?`<div class="hero-row">
+        <div class="hero-stat"><div class="hero-stat-val">${fmt(spent)}</div><div class="hero-stat-lbl">Gastado</div></div>
+        <div class="hero-stat"><div class="hero-stat-val">${fmt(budget)}</div><div class="hero-stat-lbl">Presupuesto</div></div>
+      </div>`:''}
+    </div>
+    ${hasBudget?`<div style="display:flex;justify-content:flex-end;padding:0 16px 4px;">
+      <button onclick="openSetBudget()" style="background:transparent;border:none;color:var(--text3);font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;">Editar presupuesto ✎</button>
+    </div>`:''}`;
+}
+
+function renderBudgetBar(key){
+  const w = data.weeks[key]; if(!w||!w.budget) { document.getElementById('budgetBarWrap').innerHTML=''; return; }
+  const pct = Math.min(100, (weekTotal(key)/w.budget*100));
+  const color = pct>90?'var(--red)':pct>70?'var(--orange)':'var(--accent)';
+  document.getElementById('budgetBarWrap').innerHTML=`
+    <div class="budget-bar-wrap">
+      <div class="budget-bar-top">
+        <span class="budget-bar-lbl">Uso del presupuesto</span>
+        <span class="budget-bar-pct">${pct.toFixed(0)}%</span>
+      </div>
+      <div class="budget-bar-bg"><div class="budget-bar-fill" style="width:${pct}%;background:${color};"></div></div>
+    </div>`;
+}
+
+function renderProvisions(key){
+  const w = data.weeks[key]; if(!data.fixed.length){ document.getElementById('provisionsWrap').innerHTML=''; return; }
+  const pc = w?.provisions_confirmed||{};
+  const total = weeklyProvisionTotal();
+  const confirmed = confirmedProvisions(key);
+
+  document.getElementById('provisionsWrap').innerHTML=`
+    <div class="sec-title">Provisión de gastos fijos</div>
+    <div class="week-setup" style="margin:0 16px 16px;">
+      <div class="week-setup-title">Apartar esta semana · ${fmt(total)}</div>
+      ${data.fixed.map(f=>{
+        const weekly = f.monthly/4.33;
+        const on = !!pc[f.id];
+        return `<div class="week-setup-row">
+          <div>
+            <div class="week-setup-name">${f.icon} ${f.name}</div>
+            <div class="week-setup-sub">${fmt(f.monthly)}/mes → ${fmt(weekly)}/sem</div>
+          </div>
+          <div class="week-setup-right">
+            <div class="week-setup-amt">${on?'−'+fmt(weekly):fmt(weekly)}</div>
+            <button class="toggle-btn ${on?'on':''}" onclick="toggleProvision('${key}','${f.id}')">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </button>
+          </div>
+        </div>`;
+      }).join('')}
+      <div style="display:flex;justify-content:space-between;padding-top:10px;margin-top:4px;border-top:1px solid var(--border);">
+        <span style="font-size:12px;color:var(--text2);">Confirmado</span>
+        <span style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--orange);">${fmt(confirmed)}</span>
+      </div>
+    </div>`;
+}
+
+function toggleProvision(key, fixedId){
+  ensureWeek(key);
+  if(!data.weeks[key].provisions_confirmed) data.weeks[key].provisions_confirmed={};
+  const cur = data.weeks[key].provisions_confirmed[fixedId];
+  data.weeks[key].provisions_confirmed[fixedId] = !cur;
+  save();
+  renderHero(key); renderBudgetBar(key); renderProvisions(key);
+  toast(!cur?'Provisión confirmada':'Provisión removida');
+}
+
+function renderExpList(key){
+  const w = data.weeks[key];
+  const exps = w?.expenses||[];
+  const titleEl = document.getElementById('expSecTitle');
+  const wrap = document.getElementById('expListWrap');
+  if(!exps.length){ titleEl.style.display='none'; wrap.innerHTML=''; return; }
+  titleEl.style.display='block';
+  wrap.innerHTML=`<div class="exp-list">${exps.slice().reverse().map((e,ri)=>{
+    const i = exps.length-1-ri;
+    const cat = getCat(e.cat);
+    return `<div class="exp-item">
+      <div class="exp-icon" style="background:${cat.color}22;">${cat.icon}</div>
+      <div class="exp-info">
+        <div class="exp-name">${e.note||cat.name}</div>
+        <div class="exp-date">${fmtDate(e.date)} · ${cat.name}</div>
+      </div>
+      <div class="exp-amt">−${fmt(e.amount)}</div>
+      <button class="exp-delete" onclick="deleteExp('${key}',${i})">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function deleteExp(key, idx){
+  if(!confirm('¿Eliminar este gasto?')) return;
+  data.weeks[key].expenses.splice(idx,1);
+  save(); initHome(); toast('Gasto eliminado');
+}
+
+// ══════════════════════════════════════════
+// MODALS
+// ══════════════════════════════════════════
+function closeModal(e){ if(e.target===document.getElementById('modalOverlay')) closeModalDirect(); }
+function closeModalDirect(){ document.getElementById('modalOverlay').classList.remove('show'); }
+function openModal(html){ document.getElementById('modal').innerHTML=html; document.getElementById('modalOverlay').classList.add('show'); }
+
+function openSetBudget(){
+  const key=currentWeekKey(); const w=data.weeks[key]||{};
+  openModal(`
+    <div class="modal-title">Presupuesto semanal</div>
+    <div class="modal-field">
+      <div class="modal-label">¿Cuánto tienes esta semana?</div>
+      <input class="modal-input modal-input-big" id="m-budget" type="number" inputmode="decimal" placeholder="0" value="${w.budget||''}">
+    </div>
+    <div class="modal-btn-row">
+      <button class="modal-cancel" onclick="closeModalDirect()">Cancelar</button>
+      <button class="modal-confirm" onclick="saveBudget('${key}')">Guardar</button>
+    </div>`);
+  setTimeout(()=>document.getElementById('m-budget')?.focus(),100);
+}
+
+function saveBudget(key){
+  const val = parseFloat(document.getElementById('m-budget')?.value||0);
+  if(!val||val<=0){ toast('Ingresa un monto válido'); return; }
+  ensureWeek(key); data.weeks[key].budget=val; save();
+  closeModalDirect(); initHome(); toast('Presupuesto guardado ✓');
+}
+
+function openAddExpense(){
+  const allCats = [...WEEKLY_CATS,...SPORADIC_CATS];
+  openModal(`
+    <div class="modal-title">Nuevo gasto</div>
+    <div class="modal-field">
+      <div class="modal-label">Monto</div>
+      <input class="modal-input modal-input-big" id="m-amount" type="number" inputmode="decimal" placeholder="0.00">
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Categoría</div>
+      <div class="modal-cats" id="m-cats">
+        ${allCats.map(c=>`
+          <div class="modal-cat-btn" data-id="${c.id}" onclick="selectCat('${c.id}')">
+            <div class="modal-cat-icon">${c.icon}</div>
+            <div class="modal-cat-name">${c.name}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Nota (opcional)</div>
+      <input class="modal-input" id="m-note" type="text" placeholder="ej. comida en el trabajo">
+    </div>
+    <div class="modal-btn-row">
+      <button class="modal-cancel" onclick="closeModalDirect()">Cancelar</button>
+      <button class="modal-confirm" onclick="saveExpense()">Registrar</button>
+    </div>`);
+  setTimeout(()=>document.getElementById('m-amount')?.focus(),100);
+}
+
+function selectCat(id){
+  document.querySelectorAll('.modal-cat-btn').forEach(b=>b.classList.toggle('selected',b.dataset.id===id));
+}
+
+function saveExpense(){
+  const amount = parseFloat(document.getElementById('m-amount')?.value||0);
+  const cat = document.querySelector('.modal-cat-btn.selected')?.dataset.id;
+  const note = document.getElementById('m-note')?.value||'';
+  if(!amount||amount<=0){ toast('Ingresa un monto'); return; }
+  if(!cat){ toast('Selecciona una categoría'); return; }
+  const key=currentWeekKey(); ensureWeek(key);
+  data.weeks[key].expenses.push({amount,cat,note,date:toDay()});
+  save(); closeModalDirect(); initHome(); toast('Gasto registrado ✓');
+}
+
+function openAddSavings(){
+  const remaining = weekRemaining(currentWeekKey());
+  openModal(`
+    <div class="modal-title">Registrar ahorro</div>
+    <div class="modal-field">
+      <div class="modal-label">Monto a guardar</div>
+      <input class="modal-input modal-input-big" id="m-saving" type="number" inputmode="decimal" placeholder="${remaining>0?Math.floor(remaining):0}" value="${remaining>0?Math.floor(remaining):''}">
+    </div>
+    ${remaining>0?`<div style="font-size:12px;color:var(--green);margin-bottom:4px;font-family:'DM Mono',monospace;">Te sobran ${fmt(remaining)} esta semana</div>`:''}
+    <div class="modal-field">
+      <div class="modal-label">Nota (opcional)</div>
+      <input class="modal-input" id="m-saving-note" type="text" placeholder="ej. sobrante semana tranquila">
+    </div>
+    <div class="modal-btn-row">
+      <button class="modal-cancel" onclick="closeModalDirect()">Cancelar</button>
+      <button class="modal-confirm" style="background:var(--green);" onclick="saveSaving()">Guardar</button>
+    </div>`);
+  setTimeout(()=>document.getElementById('m-saving')?.focus(),100);
+}
+
+function saveSaving(){
+  const amount = parseFloat(document.getElementById('m-saving')?.value||0);
+  const note = document.getElementById('m-saving-note')?.value||'';
+  if(!amount||amount<=0){ toast('Ingresa un monto'); return; }
+  data.savings.push({weekKey:currentWeekKey(), amount, date:toDay(), note});
+  save(); closeModalDirect(); renderSavings(); toast('Ahorro registrado ✓');
+}
+
+function openAddFixed(){
+  openModal(`
+    <div class="modal-title">Gasto fijo mensual</div>
+    <div class="modal-field">
+      <div class="modal-label">Nombre</div>
+      <input class="modal-input" id="m-fname" type="text" placeholder="ej. Seguro médico">
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Costo mensual</div>
+      <input class="modal-input modal-input-big" id="m-fmonthly" type="number" inputmode="decimal" placeholder="0">
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Ícono (emoji)</div>
+      <input class="modal-input" id="m-ficon" type="text" placeholder="🏥" maxlength="2" style="font-size:24px;text-align:center;">
+    </div>
+    <div class="modal-btn-row">
+      <button class="modal-cancel" onclick="closeModalDirect()">Cancelar</button>
+      <button class="modal-confirm" onclick="saveFixed()">Agregar</button>
+    </div>`);
+}
+
+function saveFixed(){
+  const name = document.getElementById('m-fname')?.value||'';
+  const monthly = parseFloat(document.getElementById('m-fmonthly')?.value||0);
+  const icon = document.getElementById('m-ficon')?.value||'💸';
+  if(!name){ toast('Ingresa un nombre'); return; }
+  if(!monthly||monthly<=0){ toast('Ingresa el costo mensual'); return; }
+  const id = 'f_'+Date.now();
+  const colors = ['#7c6aff','#3dd68c','#ff9f43','#4a9eff','#ff6b9d'];
+  data.fixed.push({id, name, icon, monthly, color:colors[data.fixed.length%colors.length]});
+  save(); closeModalDirect(); renderFixed(); toast('Gasto fijo agregado ✓');
+}
+
+function deleteFixed(id){
+  if(!confirm('¿Eliminar este gasto fijo?')) return;
+  data.fixed = data.fixed.filter(f=>f.id!==id);
+  save(); renderFixed(); toast('Eliminado');
+}
+
+// ══════════════════════════════════════════
+// SAVINGS VIEW
+// ══════════════════════════════════════════
+function renderSavings(){
+  const total = data.savings.reduce((s,e)=>s+e.amount,0);
+  document.getElementById('savingsSub').textContent = `${data.savings.length} ahorros registrados`;
+  document.getElementById('savingsHeroWrap').innerHTML=`
+    <div class="savings-hero">
+      <div class="savings-label">Total acumulado</div>
+      <div class="savings-amount"><span>$</span>${Number(total).toLocaleString('es-MX',{minimumFractionDigits:0})}</div>
+      <div class="savings-sub">${data.savings.length} registros · desde ${data.savings.length?fmtDate(data.savings[0].date):'—'}</div>
+    </div>`;
+  const hist = [...data.savings].reverse();
+  document.getElementById('savingsHistWrap').innerHTML = hist.length ?
+    `<div class="savings-history">${hist.map((s,i)=>`
+      <div class="savings-row">
+        <div>
+          <div style="font-size:13px;font-weight:600;">${s.note||'Ahorro semanal'}</div>
+          <div class="savings-row-week">${fmtDate(s.date)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="savings-row-amt">+${fmt(s.amount)}</div>
+          <button onclick="deleteSaving(${data.savings.length-1-i})" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:16px;">×</button>
+        </div>
+      </div>`).join('')}</div>` :
+    `<div class="empty"><div class="empty-ico">🌱</div><div class="empty-title">Sin ahorros aún</div><div class="empty-sub">Cada domingo que te sobre dinero, regístralo aquí</div></div>`;
+}
+
+function deleteSaving(idx){
+  if(!confirm('¿Eliminar este ahorro?')) return;
+  data.savings.splice(idx,1); save(); renderSavings(); toast('Eliminado');
+}
+
+// ══════════════════════════════════════════
+// FIXED VIEW
+// ══════════════════════════════════════════
+function renderFixed(){
+  const key = currentWeekKey();
+  const totalMonthly = data.fixed.reduce((s,f)=>s+f.monthly,0);
+  const totalWeekly = weeklyProvisionTotal();
+  document.getElementById('fixedListWrap').innerHTML = data.fixed.length ? `
+    <div style="padding:0 16px 12px;display:flex;justify-content:space-between;">
+      <div><div style="font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;">Total mensual</div><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--orange);">${fmt(totalMonthly)}</div></div>
+      <div style="text-align:right;"><div style="font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;">Por semana</div><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent);">${fmt(totalWeekly)}</div></div>
+    </div>
+    ${data.fixed.map(f=>{
+      const weekly = f.monthly/4.33;
+      // how much has been provisioned for this fixed in the last 4 weeks
+      const weeks = Object.keys(data.weeks).sort().slice(-4);
+      const provisioned = weeks.reduce((s,wk)=>{
+        return s+((data.weeks[wk]?.provisions_confirmed?.[f.id])?weekly:0);
+      },0);
+      const pct = Math.min(100,(provisioned/f.monthly)*100);
+      return `<div class="fixed-card">
+        <div class="fixed-card-hdr">
+          <div class="fixed-icon" style="background:${f.color}22;">${f.icon}</div>
+          <div class="fixed-info">
+            <div class="fixed-name">${f.name}</div>
+            <div class="fixed-detail">${fmt(weekly)}/sem · ${fmt(f.monthly)}/mes</div>
+          </div>
+          <div class="fixed-amounts">
+            <div class="fixed-monthly">${fmt(f.monthly)}</div>
+            <div class="fixed-weekly">${fmt(weekly)}/sem</div>
+          </div>
+          <button onclick="deleteFixed('${f.id}')" style="background:transparent;border:none;color:var(--text3);cursor:pointer;margin-left:8px;font-size:18px;line-height:1;">×</button>
+        </div>
+        <div class="fixed-prog">
+          <div class="fixed-prog-top">
+            <span class="fixed-prog-lbl">Últimas 4 semanas</span>
+            <span class="fixed-prog-val">${fmt(provisioned)} / ${fmt(f.monthly)}</span>
+          </div>
+          <div class="fixed-prog-bg"><div class="fixed-prog-fill" style="width:${pct}%;background:${pct>=100?'var(--green)':'var(--orange)'};"></div></div>
+        </div>
+      </div>`;
+    }).join('')}` : `<div class="empty"><div class="empty-ico">📋</div><div class="empty-title">Sin gastos fijos</div><div class="empty-sub">Agrega tus gastos mensuales recurrentes para provisionarlos semana a semana</div></div>`;
+}
+
+// ══════════════════════════════════════════
+// HISTORY VIEW
+// ══════════════════════════════════════════
+function renderHistory(){
+  renderHistStats();
+  renderWeeklyChart();
+  renderCatChart();
+  renderHistWeeks();
+}
+
+function getAllWeeksSorted(){
+  return Object.keys(data.weeks).filter(k=>data.weeks[k].budget>0).sort();
+}
+
+function filterWeeksByRange(weeks){
+  if(histRange==='all') return weeks;
+  const now=new Date(); const from=new Date(now);
+  if(histRange==='3m') from.setMonth(from.getMonth()-3);
+  if(histRange==='1m') from.setMonth(from.getMonth()-1);
+  const fromStr=from.toISOString().split('T')[0];
+  return weeks.filter(w=>w>=fromStr);
+}
+
+function setHistRange(btn){
+  btn.closest('.range-tabs').querySelectorAll('.range-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); histRange=btn.dataset.r;
+  renderWeeklyChart();
+}
+
+function renderHistStats(){
+  const weeks=getAllWeeksSorted();
+  const totals=weeks.map(k=>weekTotal(k));
+  const avg=totals.length?totals.reduce((a,b)=>a+b,0)/totals.length:0;
+  const max=totals.length?Math.max(...totals):0;
+  const totalSaved=data.savings.reduce((s,e)=>s+e.amount,0);
+  document.getElementById('histStats').innerHTML=`
+    <div class="stat-card"><div class="stat-val">${weeks.length}</div><div class="stat-lbl">Semanas</div></div>
+    <div class="stat-card"><div class="stat-val">${fmt(avg)}</div><div class="stat-lbl">Promedio</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--green);">${fmt(totalSaved)}</div><div class="stat-lbl">Ahorrado</div></div>`;
+}
+
+function renderWeeklyChart(){
+  const weeks=filterWeeksByRange(getAllWeeksSorted());
+  const labels=weeks.map(k=>{ const d=new Date(k+'T12:00:00'); return d.toLocaleDateString('es-MX',{day:'numeric',month:'short'}); });
+  const spent=weeks.map(k=>weekTotal(k));
+  const budgets=weeks.map(k=>data.weeks[k]?.budget||0);
+  if(weeklyChartInst) weeklyChartInst.destroy();
+  const ctx=document.getElementById('weeklyChart').getContext('2d');
+  weeklyChartInst=new Chart(ctx,{type:'bar',data:{labels,datasets:[
+    {label:'Gastado',data:spent,backgroundColor:'rgba(124,106,255,.7)',borderColor:'#7c6aff',borderWidth:1,borderRadius:4},
+    {label:'Presupuesto',data:budgets,type:'line',borderColor:'rgba(255,255,255,.2)',borderWidth:1.5,pointRadius:0,fill:false,tension:0}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a1a22',borderColor:'#2a2a36',borderWidth:1,titleColor:'#8888aa',bodyColor:'#eeeef5',callbacks:{label:c=>`${c.dataset.label}: $${c.raw.toLocaleString('es-MX')}`}}},scales:{x:{grid:{color:'#1a1a22'},ticks:{color:'#44445a',font:{size:9}}},y:{grid:{color:'#1a1a22'},ticks:{color:'#44445a',font:{size:9},callback:v=>'$'+v.toLocaleString('es-MX')}}}}});
+}
+
+function renderCatChart(){
+  // current month expenses
+  const month=toDay().slice(0,7);
+  const catTotals={};
+  Object.entries(data.weeks).forEach(([k,w])=>{
+    if(!k.startsWith(month.slice(0,7))) return;
+    (w.expenses||[]).forEach(e=>{ catTotals[e.cat]=(catTotals[e.cat]||0)+e.amount; });
+  });
+  const entries=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]);
+  if(catChartInst) catChartInst.destroy();
+  const ctx=document.getElementById('catChart').getContext('2d');
+  catChartInst=new Chart(ctx,{type:'doughnut',data:{labels:entries.map(([id])=>getCat(id).name),datasets:[{data:entries.map(([,v])=>v),backgroundColor:entries.map(([id])=>getCat(id).color+'cc'),borderColor:'#131318',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#8888aa',font:{size:10},boxWidth:10,padding:8}},tooltip:{backgroundColor:'#1a1a22',borderColor:'#2a2a36',borderWidth:1,callbacks:{label:c=>`${c.label}: $${c.raw.toLocaleString('es-MX')}`}}}}});
+}
+
+function renderHistWeeks(){
+  const weeks=getAllWeeksSorted().reverse();
+  document.getElementById('histWeeksList').innerHTML=weeks.length?weeks.map(k=>{
+    const w=data.weeks[k]; const {label}=getWeekRange(k);
+    const spent=weekTotal(k); const budget=w.budget;
+    const catTotals={};
+    (w.expenses||[]).forEach(e=>{ catTotals[e.cat]=(catTotals[e.cat]||0)+e.amount; });
+    return `<div class="hist-week" id="hw_${k}">
+      <div class="hist-week-hdr" onclick="document.getElementById('hw_${k}').classList.toggle('open')">
+        <div><div class="hist-week-lbl">${label}</div><div class="hist-week-date">Presupuesto: ${fmt(budget)}</div></div>
+        <div><div class="hist-week-total">−${fmt(spent)}</div><div style="font-size:9px;color:${spent>budget?'var(--red)':'var(--green)'};text-align:right;font-family:'DM Mono',monospace;">${spent>budget?'Excedido':'Dentro'}</div></div>
+      </div>
+      <div class="hist-week-body">
+        ${Object.entries(catTotals).map(([id,amt])=>`
+          <div class="hist-cat-row">
+            <div class="hist-cat-name">${getCat(id).icon} ${getCat(id).name}</div>
+            <div class="hist-cat-amt">${fmt(amt)}</div>
+          </div>`).join('')}
+        ${confirmedProvisions(k)>0?`<div class="hist-cat-row"><div class="hist-cat-name">⚙️ Provisiones</div><div class="hist-cat-amt">${fmt(confirmedProvisions(k))}</div></div>`:''}
+        <div class="hist-cat-row" style="background:var(--s2);">
+          <div class="hist-cat-name" style="font-weight:700;color:var(--text);">Total</div>
+          <div class="hist-cat-amt" style="color:var(--red);font-weight:700;">${fmt(spent)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join(''):`<div class="empty"><div class="empty-ico">📊</div><div class="empty-title">Sin historial aún</div><div class="empty-sub">Registra tu primer presupuesto para comenzar</div></div>`;
+}
+
+// ══════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════
+function exportData(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`wallet_${toDay()}.json`; a.click(); toast('Datos exportados ✓');
+}
+
+// ══════════════════════════════════════════
+// SERVICE WORKER
+// ══════════════════════════════════════════
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw-wallet.js').catch(()=>{});
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+initHome();
+</script>
+</body>
+</html>
