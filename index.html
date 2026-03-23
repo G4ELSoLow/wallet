@@ -861,7 +861,33 @@ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw-wallet.js'
 // ══════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════
-initHome();
+function loadData(){
+  const DEFAULT_FIXED = [
+    {id:'gym', name:'Gym', icon:'\u{1F3CB}\uFE0F', monthly:400, color:'#ff9f43'},
+    {id:'audio', name:'Streaming Audio', icon:'\u{1F3B5}', monthly:60, color:'#3dd68c'},
+    {id:'video', name:'Streaming Video', icon:'\u{1F4FA}', monthly:150, color:'#7c6aff'},
+    {id:'haircut', name:'Corte de cabello', icon:'\u2702\uFE0F', monthly:150, color:'#4a9eff'},
+  ];
+  try {
+    const raw = localStorage.getItem('wallet_data');
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(parsed && typeof parsed === 'object'){
+        data = parsed;
+        if(!data.weeks) data.weeks = {};
+        if(!data.savings) data.savings = [];
+        if(!data.fixed || !data.fixed.length) data.fixed = DEFAULT_FIXED;
+        return;
+      }
+    }
+  } catch(e){}
+  data = { weeks:{}, savings:[], fixed: DEFAULT_FIXED };
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadData();
+  initHome();
+});
 </script>
 </body>
 </html>
